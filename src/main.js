@@ -7,8 +7,8 @@ import jobRoutes from '../routes/jobRoutes.js';
 import { Client, Users } from 'node-appwrite';
 import serverless from 'serverless-http'; // Import serverless-http
 
-dotenv.config();
-connectDB();
+dotenv.config();  // Load environment variables from .env file
+connectDB();  // Connect to the database
 
 const app = express();
 app.use(express.json());
@@ -19,10 +19,11 @@ app.use('/api/jobs', jobRoutes);
 
 // Appwrite Function Route Example
 app.post('/appwrite-function', async (req, res) => {
+  // Initialize the Appwrite client
   const client = new Client()
     .setEndpoint(process.env.APPWRITE_FUNCTION_API_ENDPOINT) // Appwrite API endpoint
     .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID)   // Appwrite project ID
-    .setKey(req.headers['x-appwrite-key'] || '');           // Appwrite API key from headers
+    .setKey(process.env.APPWRITE_API_KEY);                   // Appwrite API key from environment variable
 
   // Debugging log
   console.log("Appwrite Client Initialized", client);
@@ -57,5 +58,5 @@ app.use((err, req, res, next) => {
   res.status(500).send('Something broke!');  // Send generic error message
 });
 
-// Exporting for serverless
+// Exporting for serverless deployment
 export default serverless(app);  // ES module export
