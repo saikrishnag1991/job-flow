@@ -5,6 +5,7 @@ import connectDB from '../config/db.js';
 import userRoutes from '../routes/userRoutes.js';
 import jobRoutes from '../routes/jobRoutes.js';
 import { Client, Users } from 'node-appwrite';
+import serverless from 'serverless-http';  // Import serverless-http
 
 dotenv.config();
 connectDB();
@@ -56,4 +57,5 @@ app.use((err, req, res, next) => {
   res.status(500).send('Something broke!');  // Send generic error message
 });
 
-export default app;
+// Export the app wrapped with serverless-http
+export const handler = serverless(app);
