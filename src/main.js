@@ -1,32 +1,33 @@
-import { Client, Users } from 'node-appwrite';
-import express from 'express';
-import dotenv from 'dotenv';
-import cors from 'cors';
-import connectDB from '../config/db'; // Assuming a separate DB connection for your app
-import userRoutes from '../routes/userRoutes';  // Custom routes for users
-import jobRoutes from '../routes/jobRoutes';    // Custom routes for jobs
-import serverless from 'serverless-http';  // Serverless HTTP wrapper
+const { Client, Users } = require('node-appwrite');
+const dotenv = require('dotenv');
+const cors = require('cors');
+const express = require('express');
+const connectDB = require('../config/db'); // Adjust path based on your structure
+const userRoutes = require('../routes/userRoutes'); // Adjust path based on your structure
+const jobRoutes = require('../routes/jobRoutes'); // Adjust path based on your structure
 
 dotenv.config();
-connectDB();  // Initialize DB connection (if necessary for Express routes)
+
+// Initialize DB connection if needed
+connectDB();
 
 const app = express();
 app.use(express.json());
 
-// ✅ Enable CORS for all origins
+// Enable CORS for all origins
 app.use(cors());
 
-// Setup your custom API routes for users and jobs
+// Setup custom API routes for users and jobs
 app.use('/api/users', userRoutes);
 app.use('/api/jobs', jobRoutes);
 
 // Appwrite function part
 app.post('/appwrite-function', async (req, res) => {
-  // Appwrite client setup
   const client = new Client()
     .setEndpoint(process.env.APPWRITE_FUNCTION_API_ENDPOINT)
     .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID)
-    .setKey(req.headers['x-appwrite-key'] ?? '');
+    .setKey(req.headers['x-appwrite-key'] || '');
+
   const users = new Users(client);
 
   try {
@@ -37,7 +38,7 @@ app.post('/appwrite-function', async (req, res) => {
     return res.status(500).send('Error listing users');
   }
 
-  // Check if the request path is "/ping"
+  // Handle "/ping" endpoint
   if (req.path === "/ping") {
     return res.send("Pong");
   }
@@ -51,5 +52,5 @@ app.post('/appwrite-function', async (req, res) => {
   });
 });
 
-// Wrap the Express app in serverless-http for serverless environments
-module.exports.handler = serverless(app);  // Export the handler for serverless environment
+// Appwrite will invoke the function automatically when triggered
+module.exports = app;  // Export the app as the handler for Appwrite
