@@ -57,5 +57,5 @@ app.use((err, req, res, next) => {
   res.status(500).send('Something broke!');  // Send generic error message
 });
 
-// Export the app wrapped with serverless-http
-export const handler = serverless(app);
+// Export the handler for serverless
+module.exports = serverless(app);  // Ensure this is exported as the serverless handler
