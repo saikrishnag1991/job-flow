@@ -54,3 +54,4 @@ app.post('/appwrite-function', async (req, res) => {
 
 // Appwrite will invoke the function automatically when triggered
 module.exports = app;  // Export the app as the handler for Appwrite
+
