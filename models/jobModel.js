@@ -19,7 +19,6 @@ const JobSchema = new mongoose.Schema({
 
     // ✅ Approved applications
     acceptedApplications: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-
 }, { timestamps: true });
 
 // Virtual for "posted X time ago"
@@ -42,4 +41,4 @@ JobSchema.virtual('postedAgo').get(function () {
     }
 });
 
-module.exports = mongoose.model('Job', JobSchema);
+export default mongoose.model('Job', JobSchema);
