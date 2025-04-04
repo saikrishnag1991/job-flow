@@ -16,32 +16,44 @@ app.use(cors());
 app.use('/api/users', userRoutes);
 app.use('/api/jobs', jobRoutes);
 
+// Appwrite Function Route Example
 app.post('/appwrite-function', async (req, res) => {
   const client = new Client()
-    .setEndpoint(process.env.APPWRITE_FUNCTION_API_ENDPOINT)
-    .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID)
-    .setKey(req.headers['x-appwrite-key'] || '');
+    .setEndpoint(process.env.APPWRITE_FUNCTION_API_ENDPOINT) // Appwrite API endpoint
+    .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID)   // Appwrite project ID
+    .setKey(req.headers['x-appwrite-key'] || '');           // Appwrite API key from headers
 
-  const users = new Users(client);
+  // Debugging log
+  console.log("Appwrite Client Initialized", client);
+
+  const users = new Users(client);  // Create a new Users instance
 
   try {
-    const response = await users.list();
-    console.log(`Total users: ${response.total}`);
+    const response = await users.list();  // Fetch list of users
+    console.log(`Total users: ${response.total}`);  // Log the total users
   } catch (err) {
-    console.error('Could not list users: ' + err.message);
-    return res.status(500).send('Error listing users');
+    console.error('Could not list users: ' + err.message);  // Log the error if fetching fails
+    return res.status(500).send('Error listing users');  // Send error response
   }
 
+  // Ping endpoint (for testing)
   if (req.path === "/ping") {
     return res.send("Pong");
   }
 
+  // Respond with a simple JSON message if no issues
   return res.json({
     motto: "Build like a team of hundreds_",
     learn: "https://appwrite.io/docs",
     connect: "https://appwrite.io/discord",
     getInspired: "https://builtwith.appwrite.io",
   });
+});
+
+// Global error handler (catch unhandled errors)
+app.use((err, req, res, next) => {
+  console.error(err.stack);  // Log the error stack
+  res.status(500).send('Something broke!');  // Send generic error message
 });
 
 export default app;
