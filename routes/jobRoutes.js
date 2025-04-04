@@ -1,5 +1,15 @@
-const express = require('express');
-const { createJob, getAllJobs, getJobById, updateJobById, deleteJobById, applyForJob, getJobApplications, handleJobApplication } = require('../controllers/jobController'); // Make sure this import path is correct
+import express from 'express';
+import {
+    createJob,
+    getAllJobs,
+    getJobById,
+    updateJobById,
+    deleteJobById,
+    applyForJob,
+    getJobApplications,
+    handleJobApplication
+} from '../controllers/jobController.js';
+
 const router = express.Router();
 
 // Routes for jobs
@@ -13,4 +23,4 @@ router.get('/:jobId/applications', getJobApplications);
 // Accept or Reject job application (Supervisor)
 router.put('/:jobId/applications/:userId', handleJobApplication);
 
-module.exports = router;
+export default router;

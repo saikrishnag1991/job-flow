@@ -1,11 +1,14 @@
-const Job = require('../models/jobModel'); // Job model
-const User = require('../models/userModel'); // User model
-
-const asyncHandler = require('express-async-handler');
+import Job from '../models/jobModel.js'; // Job model
+import User from '../models/userModel.js'; // User model
+import asyncHandler from 'express-async-handler';
 
 // Create a new job
-const createJob = asyncHandler(async (req, res) => {
-    const { title, company, location, type, salary, description, requirements, benefits, contactPerson, startDate, status } = req.body;
+export const createJob = asyncHandler(async (req, res) => {
+    const {
+        title, company, location, type, salary,
+        description, requirements, benefits, contactPerson,
+        startDate, status
+    } = req.body;
 
     const job = new Job({
         title,
@@ -19,7 +22,7 @@ const createJob = asyncHandler(async (req, res) => {
         contactPerson,
         startDate,
         status,
-        postedBy: "67eea6fe1ffeb01947abe181" // assuming the user is authenticated
+        postedBy: "67eea6fe1ffeb01947abe181" // Mock user ID or get from auth
     });
 
     const createdJob = await job.save();
@@ -27,87 +30,76 @@ const createJob = asyncHandler(async (req, res) => {
 });
 
 // Get all jobs
-const getAllJobs = asyncHandler(async (req, res) => {
+export const getAllJobs = asyncHandler(async (req, res) => {
     const jobs = await Job.find().populate('postedBy', 'name email').sort({ createdAt: -1 });
     res.json(jobs);
 });
 
 // Get a job by ID
-const getJobById = asyncHandler(async (req, res) => {
+export const getJobById = asyncHandler(async (req, res) => {
     const job = await Job.findById(req.params.id).populate('postedBy', 'name email');
 
     if (!job) {
-        res.status(404).json({ message: 'Job not found' });
-        return;
+        return res.status(404).json({ message: 'Job not found' });
     }
 
     res.json(job);
 });
 
 // Update a job
-const updateJobById = asyncHandler(async (req, res) => {
-    const { title, company, location, type, salary, description, requirements, benefits, contactPerson, startDate, status } = req.body;
+export const updateJobById = asyncHandler(async (req, res) => {
+    const {
+        title, company, location, type, salary,
+        description, requirements, benefits, contactPerson,
+        startDate, status
+    } = req.body;
 
     const job = await Job.findById(req.params.id);
 
     if (!job) {
-        res.status(404).json({ message: 'Job not found' });
-        return;
+        return res.status(404).json({ message: 'Job not found' });
     }
 
-    job.title = title || job.title;
-    job.company = company || job.company;
-    job.location = location || job.location;
-    job.type = type || job.type;
-    job.salary = salary || job.salary;
-    job.description = description || job.description;
-    job.requirements = requirements || job.requirements;
-    job.benefits = benefits || job.benefits;
-    job.contactPerson = contactPerson || job.contactPerson;
-    job.startDate = startDate || job.startDate;
-    job.status = status || job.status;
+    Object.assign(job, {
+        title, company, location, type, salary,
+        description, requirements, benefits, contactPerson,
+        startDate, status
+    });
 
     const updatedJob = await job.save();
     res.json(updatedJob);
 });
 
 // Delete a job
-const deleteJobById = asyncHandler(async (req, res) => {
+export const deleteJobById = asyncHandler(async (req, res) => {
     const job = await Job.findById(req.params.id);
 
     if (!job) {
-        res.status(404).json({ message: 'Job not found' });
-        return;
+        return res.status(404).json({ message: 'Job not found' });
     }
 
     await job.remove();
     res.json({ message: 'Job removed' });
 });
 
-// 🟢 Apply for a Job (User requests to apply)
-const applyForJob = asyncHandler(async (req, res) => {
-    const { jobId } = req.params;  // Job ID from request params
-    const { userId } = req.body;   // User ID from request body
+// Apply for a Job
+export const applyForJob = asyncHandler(async (req, res) => {
+    const { jobId } = req.params;
+    const { userId } = req.body;
 
-    // Fetch Job
     const job = await Job.findById(jobId);
-    if (!job) {
-        return res.status(404).json({ message: 'Job not found' });
-    }
+    if (!job) return res.status(404).json({ message: 'Job not found' });
 
-    // Fetch User
     const user = await User.findById(userId);
-    if (!user) {
-        return res.status(404).json({ message: 'User not found' });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const alreadyApplied = job.pendingApplications.some(app => app._id.equals(user._id)) ||
+        job.acceptedApplications.some(app => app._id.equals(user._id));
+
+    if (alreadyApplied) {
+        return res.status(400).json({ message: 'Already applied' });
     }
 
-    // Check if user already applied
-    if (job.pendingApplications.some(applicant => applicant._id.equals(user._id)) ||
-        job.acceptedApplications.some(applicant => applicant._id.equals(user._id))) {
-        return res.status(400).json({ message: 'You have already applied for this job' });
-    }
-
-    // Add full user details to pendingApplications
     job.pendingApplications.push({
         _id: user._id,
         name: user.name,
@@ -122,14 +114,12 @@ const applyForJob = asyncHandler(async (req, res) => {
     });
 
     await job.save();
-
-    res.status(200).json({ message: 'Application submitted for review', job });
+    res.status(200).json({ message: 'Application submitted', job });
 });
 
-
-// 🟢 Get all job applications (for supervisors)
-const getJobApplications = asyncHandler(async (req, res) => {
-    const { jobId } = req.params; // Get Job ID
+// Get job applications
+export const getJobApplications = asyncHandler(async (req, res) => {
+    const { jobId } = req.params;
 
     const job = await Job.findById(jobId)
         .populate({
@@ -141,51 +131,36 @@ const getJobApplications = asyncHandler(async (req, res) => {
             select: 'name email skills documents certifications createdAt updatedAt'
         });
 
-    if (!job) {
-        return res.status(404).json({ message: 'Job not found' });
-    }
+    if (!job) return res.status(404).json({ message: 'Job not found' });
 
     res.status(200).json({
         pendingApplications: job.pendingApplications,
         acceptedApplications: job.acceptedApplications
     });
 });
-;
 
-
-// ✅ Accept or Reject a Job Application (Supervisor Decision)
-const handleJobApplication = asyncHandler(async (req, res) => {
-    const { jobId, userId } = req.params; // Get job ID & user ID from request params
-    const { action } = req.body; // "accept" or "reject"
+// Accept or Reject an application
+export const handleJobApplication = asyncHandler(async (req, res) => {
+    const { jobId, userId } = req.params;
+    const { action } = req.body;
 
     const job = await Job.findById(jobId);
     if (!job) return res.status(404).json({ message: 'Job not found' });
 
-    // Check if user applied
-    if (!job.pendingApplications.includes(userId)) {
-        return res.status(400).json({ message: 'User has not applied for this job' });
+    if (!job.pendingApplications.find(app => app._id?.toString() === userId)) {
+        return res.status(400).json({ message: 'User has not applied' });
     }
 
     if (action === 'accept') {
-        // Move user from pending to accepted
-        job.pendingApplications = job.pendingApplications.filter(id => id.toString() !== userId);
+        job.pendingApplications = job.pendingApplications.filter(app => app._id?.toString() !== userId);
         job.acceptedApplications.push(userId);
         await job.save();
-
         res.status(200).json({ message: 'Application accepted' });
     } else if (action === 'reject') {
-        // Remove user from pending applications
-        job.pendingApplications = job.pendingApplications.filter(id => id.toString() !== userId);
+        job.pendingApplications = job.pendingApplications.filter(app => app._id?.toString() !== userId);
         await job.save();
-
         res.status(200).json({ message: 'Application rejected' });
     } else {
         res.status(400).json({ message: 'Invalid action' });
     }
 });
-
-module.exports = {
-    createJob, getAllJobs, getJobById, updateJobById, deleteJobById, applyForJob,
-    getJobApplications,
-    handleJobApplication
-};

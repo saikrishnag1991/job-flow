@@ -1,27 +1,21 @@
-const { Client, Users } = require('node-appwrite');
-const dotenv = require('dotenv');
-const cors = require('cors');
-const express = require('express');
-const connectDB = require('../config/db'); // Adjust path based on your structure
-const userRoutes = require('../routes/userRoutes'); // Adjust path based on your structure
-const jobRoutes = require('../routes/jobRoutes'); // Adjust path based on your structure
+import express from 'express';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import connectDB from '../config/db.js';
+import userRoutes from '../routes/userRoutes.js';
+import jobRoutes from '../routes/jobRoutes.js';
+import { Client, Users } from 'node-appwrite';
 
 dotenv.config();
-
-// Initialize DB connection if needed
 connectDB();
 
 const app = express();
 app.use(express.json());
-
-// Enable CORS for all origins
 app.use(cors());
 
-// Setup custom API routes for users and jobs
 app.use('/api/users', userRoutes);
 app.use('/api/jobs', jobRoutes);
 
-// Appwrite function part
 app.post('/appwrite-function', async (req, res) => {
   const client = new Client()
     .setEndpoint(process.env.APPWRITE_FUNCTION_API_ENDPOINT)
@@ -38,12 +32,10 @@ app.post('/appwrite-function', async (req, res) => {
     return res.status(500).send('Error listing users');
   }
 
-  // Handle "/ping" endpoint
   if (req.path === "/ping") {
     return res.send("Pong");
   }
 
-  // Default response from the Appwrite function
   return res.json({
     motto: "Build like a team of hundreds_",
     learn: "https://appwrite.io/docs",
@@ -52,6 +44,4 @@ app.post('/appwrite-function', async (req, res) => {
   });
 });
 
-// Appwrite will invoke the function automatically when triggered
-module.exports = app;  // Export the app as the handler for Appwrite
-
+export default app;
